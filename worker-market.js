@@ -9,7 +9,7 @@
  * D1 스키마는 schema.sql 참고. README.md 에 5분 배포 가이드 있음.
  */
 
-const ALLOWED_ORIGIN = "*"; // 예: "https://myname.github.io"
+const ALLOWED_ORIGIN = "https://baeggman.github.io";
 const TOKEN_TTL = 60 * 60 * 24 * 30; // 세션 30일
 const PBKDF2_ITER = 100000;
 

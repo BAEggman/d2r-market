@@ -1,0 +1,9 @@
+name = "d2r-market"
+main = "worker-market.js"
+compatibility_date = "2025-08-01"
+account_id = "d305f0a852e9a2543ebe437484735161"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "d2r-market"
+database_id = "3c1a706c-6ba2-4a27-95ce-e007a1ef02d9"
