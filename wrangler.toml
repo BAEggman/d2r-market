@@ -1,3 +1,5 @@
+# Cloudflare Workers Git 배포 트리거
+
 name = "d2r-market"
 main = "worker-market.js"
 compatibility_date = "2025-08-01"
