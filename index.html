@@ -1,0 +1,948 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D2R 장터 — 디아블로 2 레저렉션 거래</title>
+<meta name="description" content="디아블로 2 레저렉션 아이템 팝니다/삽니다 — 한글 아이템 검색, 룬 시세, 거래완료 기록 기반 시세.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c0a08; --panel:#151109; --panel-2:#1c160c; --plate:#0f0c07;
+  --line:#2a2115; --line-2:#3a2e1c;
+  --text:#e8ddc4; --dim:#8d7f63;
+  --gold:#d4b96a; --gold-deep:#a8894a; --focus:#e0c169;
+  --sell:#d4b96a; --buy:#6fa8e0; --done:#5f8f6a; --danger:#c96a54;
+  --c-u:#cfa348; --c-s:#4fc36b; --c-w:#d4b96a; --c-r:#d8a657; --c-m:#7d95f0; --c-b:#d6cdb8;
+}
+*{margin:0; padding:0; box-sizing:border-box}
+html{background:var(--bg)}
+body{
+  font-family:"Noto Sans KR",sans-serif; color:var(--text); font-size:14.5px; line-height:1.6;
+  background:
+    radial-gradient(1200px 500px at 50% -150px, #241b0d 0%, transparent 60%),
+    var(--bg);
+  min-height:100vh;
+}
+.wrap{max-width:860px; margin:0 auto; padding:0 16px 80px}
+
+/* ── header ── */
+header{border-bottom:1px solid var(--line); background:rgba(12,10,8,.92); position:sticky; top:0; z-index:20; backdrop-filter:blur(6px)}
+.hbar{max-width:860px; margin:0 auto; padding:14px 16px; display:flex; align-items:center; gap:14px}
+.logo{font-family:Cinzel,serif; font-weight:700; font-size:20px; letter-spacing:.14em; color:var(--gold); text-decoration:none; white-space:nowrap}
+.logo small{display:block; font-family:"Noto Serif KR",serif; font-size:10.5px; letter-spacing:.42em; color:var(--dim); font-weight:600; margin-top:1px}
+.hnav{margin-left:auto; display:flex; gap:6px; align-items:center}
+.hnav a{color:var(--dim); text-decoration:none; font-size:13.5px; padding:7px 11px; border-radius:8px; border:1px solid transparent}
+.hnav a:hover{color:var(--text)}
+.hnav a.on{color:var(--gold); border-color:var(--line-2); background:var(--panel)}
+.hnav .uid{color:var(--gold-deep); font-size:12.5px; padding:0 4px; max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+
+/* ── common ── */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  font:inherit; font-size:13.5px; font-weight:500; letter-spacing:.02em; cursor:pointer;
+  color:var(--text); background:var(--panel-2); border:1px solid var(--line-2); border-radius:9px; padding:9px 14px;
+  text-decoration:none;
+}
+.btn:hover{border-color:#5a4526; color:#f4ead2}
+.btn:disabled{opacity:.5; cursor:default}
+.btn-gold{background:linear-gradient(180deg,#2b2110,#1f180b); border-color:#6b5426; color:var(--gold); font-weight:600}
+.btn-gold:hover{border-color:#8a6d33; color:#ecd48e}
+.btn-danger{color:#e0937f; border-color:#4a251c}
+.btn-sm{padding:5px 10px; font-size:12.5px; border-radius:7px}
+.btn:focus-visible, a:focus-visible{outline:2px solid var(--focus); outline-offset:2px}
+input,select,textarea{
+  font:inherit; font-size:14px; color:var(--text); background:var(--panel); border:1px solid var(--line-2);
+  border-radius:9px; padding:10px 12px; width:100%;
+}
+input::placeholder,textarea::placeholder{color:#6f6350}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--focus)}
+label{display:block; font-size:12.5px; color:var(--dim); margin:14px 0 6px; letter-spacing:.04em}
+.chip{display:inline-block; font-size:11px; padding:2px 9px; border:1px solid var(--line-2); border-radius:99px; color:#bfae8c; background:var(--panel-2); letter-spacing:.03em}
+.status{margin-top:12px; font-size:13px; color:var(--dim); min-height:1.4em}
+.err-box{margin-top:12px; color:#e08b7a; font-size:13px; background:#20100c; border:1px solid #4a251c; border-radius:8px; padding:10px 12px}
+.spin{display:inline-block; width:12px; height:12px; border:2px solid var(--line-2); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; vertical-align:-2px; margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+h1.page{font-family:"Noto Serif KR",serif; font-size:19px; font-weight:700; color:var(--gold); letter-spacing:.05em; margin:26px 0 4px}
+.sub{color:var(--dim); font-size:13px}
+
+/* ── setup banner ── */
+.setup-banner{margin-top:18px; background:#231607; border:1px solid #5a4526; border-radius:10px; padding:12px 14px; font-size:13.5px; color:#d8c49a}
+.setup-banner input{margin-top:8px}
+.setup-banner .row{display:flex; gap:8px; margin-top:8px}
+
+/* ── filter bar ── */
+.filters{display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 14px; align-items:center}
+.filters select{width:auto; padding:8px 10px; font-size:13px}
+.filters .q{flex:1; min-width:160px}
+.seg{display:inline-flex; border:1px solid var(--line-2); border-radius:9px; overflow:hidden}
+.seg button{font:inherit; font-size:13px; padding:8px 13px; background:var(--panel); color:var(--dim); border:0; cursor:pointer}
+.seg button.on{background:var(--panel-2); color:var(--gold); font-weight:600}
+
+/* ── listing rows ── */
+.lrow{
+  display:block; text-decoration:none; color:inherit;
+  background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:13px 15px; margin-bottom:9px;
+}
+.lrow:hover{border-color:var(--line-2); background:#171209}
+.lrow .top{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap}
+.badge{font-size:11px; font-weight:700; letter-spacing:.1em; padding:2px 8px; border-radius:5px}
+.badge.sell{color:#1c1509; background:var(--sell)}
+.badge.buy{color:#0d1520; background:var(--buy)}
+.badge.done{color:#0f1a12; background:var(--done)}
+.iname{font-family:"Noto Serif KR",serif; font-weight:700; font-size:16px}
+.ien{color:var(--dim); font-size:12px}
+.lrow .opts{color:#b3a586; font-size:13px; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.price{font-family:"Noto Serif KR",serif; font-weight:600; color:var(--c-r); font-size:14.5px; margin-top:6px}
+.lrow .meta{display:flex; flex-wrap:wrap; gap:5px 8px; margin-top:8px; align-items:center; color:var(--dim); font-size:12px}
+.more-wrap{display:flex; justify-content:center; margin:16px 0}
+
+/* ── detail ── */
+.plate{
+  margin-top:18px; background:var(--plate); border:1px solid var(--line-2); border-radius:6px;
+  padding:22px 18px; box-shadow:inset 0 0 0 1px #000, inset 0 0 60px rgba(0,0,0,.5), 0 10px 30px rgba(0,0,0,.4);
+  position:relative;
+}
+.plate::before,.plate::after{
+  content:""; position:absolute; left:10px; right:10px; height:1px;
+  background:linear-gradient(90deg, transparent, #6b5426 20%, #6b5426 80%, transparent);
+}
+.plate::before{top:6px}.plate::after{bottom:6px}
+.p-name{font-family:"Noto Serif KR",serif; font-weight:700; font-size:21px; text-align:center; letter-spacing:.03em}
+.p-en{text-align:center; color:var(--dim); font-size:12.5px; margin-top:2px; letter-spacing:.06em}
+.p-chips{display:flex; justify-content:center; flex-wrap:wrap; gap:6px; margin-top:12px}
+.p-opts{margin-top:16px; padding:14px; background:var(--panel); border:1px solid var(--line); border-radius:8px;
+  font-family:"Noto Serif KR",serif; font-size:14.5px; color:#c9d7f0; white-space:pre-wrap; line-height:1.75; text-align:center}
+.p-price{margin-top:14px; text-align:center; font-family:"Noto Serif KR",serif; font-size:17px; color:var(--c-r); font-weight:700}
+.p-seller{margin-top:14px; text-align:center; color:var(--dim); font-size:13px}
+.p-seller b{color:#c9b98f; font-weight:600}
+.p-cta{display:flex; justify-content:center; flex-wrap:wrap; gap:9px; margin-top:16px}
+.owner-bar{display:flex; justify-content:center; flex-wrap:wrap; gap:8px; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line)}
+
+/* ── comments ── */
+.cmt-box{margin-top:22px}
+.cmt{padding:11px 4px; border-bottom:1px solid var(--line)}
+.cmt .who{font-size:12px; color:var(--gold-deep); font-weight:600}
+.cmt .when{color:var(--dim); font-weight:400; margin-left:6px}
+.cmt p{margin-top:3px; font-size:13.5px; white-space:pre-wrap}
+.cmt-form{display:flex; gap:8px; margin-top:12px}
+.cmt-form textarea{min-height:44px; resize:vertical}
+
+/* ── forms ── */
+.card{margin-top:18px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px 18px}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:0 14px}
+@media (max-width:560px){.grid2{grid-template-columns:1fr}}
+.ac{position:relative}
+.ac-list{position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:30; background:#1a1409; border:1px solid var(--line-2);
+  border-radius:9px; overflow:hidden; box-shadow:0 12px 30px rgba(0,0,0,.5)}
+.ac-list button{display:flex; width:100%; gap:8px; align-items:baseline; font:inherit; text-align:left; padding:9px 12px;
+  background:none; border:0; border-bottom:1px solid var(--line); color:var(--text); cursor:pointer; font-size:13.5px}
+.ac-list button:last-child{border-bottom:0}
+.ac-list button:hover,.ac-list button.hl{background:#241b0d}
+.ac-list .en{color:var(--dim); font-size:11.5px; margin-left:auto}
+.prow{display:flex; gap:8px; margin-top:8px}
+.prow select{width:130px}
+.prow input{width:90px}
+.hint{font-size:12px; color:var(--dim); margin-top:6px}
+.stats-list{margin-top:10px}
+/* ── messages ── */
+.mrow{display:flex; gap:10px; align-items:center; text-decoration:none; color:inherit; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:8px}
+.mrow:hover{border-color:var(--line-2)}
+.mrow .who{font-weight:600; color:var(--gold); font-size:14px; white-space:nowrap}
+.mrow .last{color:var(--dim); font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1}
+.mrow .when{color:var(--dim); font-size:11.5px; white-space:nowrap}
+.pill{min-width:18px; height:18px; padding:0 5px; border-radius:99px; background:var(--danger); color:#fff; font-size:11px; font-weight:700; display:inline-flex; align-items:center; justify-content:center}
+.navpill{margin-left:5px; vertical-align:1px}
+.thread{margin-top:14px; display:flex; flex-direction:column; gap:8px}
+.bub{max-width:78%; padding:9px 12px; border-radius:12px; font-size:13.5px; white-space:pre-wrap; border:1px solid var(--line); background:var(--panel); align-self:flex-start}
+.bub.mine{align-self:flex-end; background:#241b0d; border-color:#5a4526}
+.bub .bwhen{display:block; margin-top:4px; color:var(--dim); font-size:10.5px}
+.bub a.lref{color:var(--gold); font-size:12px; text-decoration:none; display:inline-block; margin-bottom:5px; border:1px solid var(--line-2); border-radius:6px; padding:1px 8px}
+.code-box{margin-top:14px; text-align:center; background:#241b0d; border:1px dashed #6b5426; border-radius:10px; padding:18px 14px}
+.code-box .code{font-family:ui-monospace,SFMono-Regular,monospace; font-size:19px; letter-spacing:.07em; color:var(--gold); font-weight:700; user-select:all; word-break:break-all}
+
+.footer{margin-top:40px; border-top:1px solid var(--line); padding-top:14px; color:var(--dim); font-size:12.5px}
+.footer summary{cursor:pointer; color:var(--gold-deep)}
+
+/* ── mobile readability boost ── */
+@media (max-width:640px){
+  body{font-size:17px; line-height:1.75}
+  .wrap{padding:0 14px 90px}
+  .logo{font-size:21px}
+  .logo small{font-size:10.5px}
+  .hnav a{font-size:15px; padding:9px 12px}
+  .hnav .uid{font-size:14px; max-width:92px}
+  .btn{font-size:15.5px; padding:12px 16px; border-radius:10px}
+  .btn-sm{font-size:14px; padding:8px 12px}
+  input,select,textarea{font-size:16.5px; padding:13px 14px}
+  label{font-size:14.5px; margin:16px 0 7px}
+  .chip{font-size:13px; padding:4px 11px}
+  .status{font-size:15px}
+  .err-box{font-size:15px; padding:12px 14px}
+  h1.page{font-size:22px}
+  .sub{font-size:15px}
+  .setup-banner{font-size:15.5px; padding:14px 16px}
+  .filters select{font-size:15px; padding:10px 12px}
+  .seg button{font-size:15px; padding:10px 15px}
+  .iname{font-size:19px}
+  .ien{font-size:14px}
+  .lrow{padding:16px 16px}
+  .lrow .opts{font-size:15.5px; white-space:normal}
+  .price{font-size:17.5px}
+  .lrow .meta{font-size:14px}
+  .badge{font-size:12.5px; padding:3px 9px}
+  .p-name{font-size:25px}
+  .p-en{font-size:14.5px}
+  .p-opts{font-size:17px; line-height:1.85; padding:16px}
+  .p-price{font-size:20px}
+  .p-seller{font-size:15px}
+  .cmt .who{font-size:14px}
+  .cmt p{font-size:16px}
+  .cmt-form textarea{min-height:52px}
+  .card{padding:18px 16px}
+  .ac-list button{font-size:15.5px; padding:11px 13px}
+  .ac-list .en{font-size:13.5px}
+  .hint{font-size:14px}
+  .mrow .who{font-size:16px}
+  .mrow .last{font-size:15px}
+  .mrow .when{font-size:13px}
+  .bub{font-size:15.5px; max-width:85%}
+  .bub .bwhen{font-size:12px}
+  .bub a.lref{font-size:14px}
+  .code-box .code{font-size:22px}
+  .footer{font-size:14px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="hbar">
+    <a class="logo" href="#/">D2R 장터<small>SANCTUARY MARKET</small></a>
+    <nav class="hnav" id="nav"></nav>
+  </div>
+</header>
+
+<div class="wrap" id="app"></div>
+
+<script src="data.js"></script>
+<script>
+(()=>{ "use strict";
+/* ══ 설정 ══ */
+const API_BASE_DEFAULT = ""; // 배포 시 Worker 주소로 교체 가능 (예: "https://d2r-market.계정.workers.dev")
+const $ = (s,el)=> (el||document).querySelector(s);
+const app = $("#app");
+const api_base = ()=> (localStorage.getItem("d2rmApi") || API_BASE_DEFAULT).replace(/\/+$/,"");
+const token = ()=> localStorage.getItem("d2rmToken") || "";
+const me = ()=> { try{ return JSON.parse(localStorage.getItem("d2rmUser")||"null"); }catch(_){ return null; } };
+const setAuth = (t,u)=>{ if(t){localStorage.setItem("d2rmToken",t); localStorage.setItem("d2rmUser",JSON.stringify(u));} else {localStorage.removeItem("d2rmToken"); localStorage.removeItem("d2rmUser");} renderNav(); };
+
+/* ══ 아이템 사전 ══ */
+const DB = (window.D2DB && window.D2DB.items) || [];
+const TYPE_KO = {u:"고유",s:"세트",w:"룬어",r:"룬",m:"매직",b:"베이스",o:"기타"};
+const TYPE_C  = {u:"var(--c-u)",s:"var(--c-s)",w:"var(--c-w)",r:"var(--c-r)",m:"var(--c-m)",b:"var(--c-b)",o:"var(--c-b)"};
+const norm = (s)=> (s||"").toLowerCase().replace(/[\s'’\-·.,:()\[\]]/g,"");
+const grams = (s)=>{ const g=new Set(); const t="\u0002"+s+"\u0003"; for(let i=0;i<t.length-1;i++) g.add(t.slice(i,i+2)); return g; };
+const dice = (a,b)=>{ if(!a.size||!b.size) return 0; let n=0; for(const x of a) if(b.has(x)) n++; return 2*n/(a.size+b.size); };
+DB.forEach(it=>{ it._n=norm(it.k); it._ne=norm(it.e); it._g=grams(it._n); it._keys=[it._n,it._ne].concat((it.a||[]).map(norm)); });
+function searchItems(q, max){
+  const nq=norm(q); if(!nq) return [];
+  const qg=grams(nq); const out=[];
+  for(const it of DB){
+    let s=0;
+    for(const k of it._keys){ if(!k) continue;
+      if(k===nq){ s=1.05; break; }
+      if(k.startsWith(nq)) s=Math.max(s,.98 - (k.length-nq.length)*.004);
+      else if(k.includes(nq)) s=Math.max(s,.9 - (k.length-nq.length)*.004);
+    }
+    if(s<.9){ s=Math.max(s, dice(qg, it._g)); }
+    if(s>=.55){ s += ({u:2,w:2,s:1,r:1}[it.t]||0)*.01; out.push([s,it]); }
+  }
+  out.sort((a,b)=> b[0]-a[0] || a[1].k.length-b[1].k.length);
+  return out.slice(0, max||8).map(x=>x[1]);
+}
+const byEn = new Map(DB.map(it=>[it.e, it]));
+const RUNES = DB.filter(it=>it.t==="r");
+const runeKo = (short)=>{ const it=byEn.get(short+" Rune"); return it? it.k.replace(/\s*룬$/,"") : short; };
+
+/* ══ 라벨 ══ */
+const L = {
+  type:{sell:"팝니다", buy:"삽니다"},
+  platform:{pc:"PC", switch:"스위치", ps:"PS", xbox:"Xbox"},
+  mode:{sc:"소프트코어", hc:"하드코어"},
+  ladder:{ladder:"래더", non:"스탠"},
+  version:{classic:"오리지널", lod:"확장", rotw:"악군"},
+  status:{active:"판매중", done:"거래완료", hidden:"숨김"},
+};
+const fmtRel=(sec)=>{ const t=sec*1000; if(!t) return "";
+  const m=Math.max(0,(Date.now()-t)/60000);
+  if(m<1) return "방금 전"; if(m<60) return Math.floor(m)+"분 전";
+  if(m<1440) return Math.floor(m/60)+"시간 전"; if(m<43200) return Math.floor(m/1440)+"일 전";
+  return new Date(t).toLocaleDateString("ko-KR"); };
+const priceStr=(l)=>{
+  if(l.price_mode==="offer") return "가격 제안 받음";
+  if(l.price_mode==="text") return l.price_text || "가격 문의";
+  const parts=(l.price_runes||[]).map(r=> runeKo(r.rune) + (r.qty>1? "×"+r.qty : ""));
+  return parts.join(" + ") + (l.price_text? ` (${l.price_text})` : "");
+};
+
+/* ══ API ══ */
+async function api(path, opt={}){
+  const base=api_base();
+  if(!base) throw Object.assign(new Error("먼저 하단 설정에서 API 서버 주소를 저장해 주세요"),{setup:true});
+  const headers={ "content-type":"application/json" };
+  if(token()) headers.authorization="Bearer "+token();
+  let res;
+  try{ res=await fetch(base+path,{ method:opt.method||"GET", headers, body:opt.body? JSON.stringify(opt.body):undefined }); }
+  catch(_){ throw new Error("서버에 연결하지 못했습니다. API 주소와 네트워크를 확인해 주세요"); }
+  let data=null; try{ data=await res.json(); }catch(_){}
+  if(res.status===401 && !path.startsWith("/api/auth/")){ if(opt.auth!=="optional") setAuth(null); }
+  if(!res.ok) throw new Error((data&&data.error)||("오류 ("+res.status+")"));
+  return data;
+}
+
+/* ══ 라우터 ══ */
+const routes=[
+  [/^#\/?$/, viewFeed],
+  [/^#\/l\/(\d+)$/, (m)=>viewDetail(+m[1])],
+  [/^#\/new$/, ()=>viewForm(null)],
+  [/^#\/edit\/(\d+)$/, (m)=>viewForm(+m[1])],
+  [/^#\/login$/, viewLogin],
+  [/^#\/recover$/, viewRecover],
+  [/^#\/msg$/, viewMsgList],
+  [/^#\/msg\/([^/]+)$/, (m)=>viewMsgThread(decodeURIComponent(m[1]))],
+  [/^#\/admin$/, viewAdmin],
+  [/^#\/me$/, viewMe],
+];
+function renderNav(){
+  const u=me();
+  $("#nav").innerHTML="";
+  const mk=(href,label,on)=>{ const a=document.createElement("a"); a.href=href; a.textContent=label; if(on) a.className="on"; return a; };
+  const h=location.hash||"#/";
+  $("#nav").append(
+    mk("#/","매물", /^#\/?$/.test(h)||h.startsWith("#/l/")),
+    mk("#/new","+ 등록", h==="#/new")
+  );
+  if(u){
+    const s=document.createElement("span"); s.className="uid"; s.textContent=u.username;
+    const msg=mk("#/msg","쪽지", h.startsWith("#/msg"));
+    if(window.__unread){ const p=document.createElement("span"); p.className="pill navpill"; p.textContent=window.__unread>99?"99+":String(window.__unread); msg.append(p); }
+    $("#nav").append(s, msg, mk("#/me","내 매물", h==="#/me"));
+    if(u.is_admin) $("#nav").append(mk("#/admin","관리", h==="#/admin"));
+    const out=mk("#","로그아웃"); out.onclick=async(e)=>{e.preventDefault(); try{await api("/api/auth/logout",{method:"POST"});}catch(_){/**/} setAuth(null); go("#/");};
+    $("#nav").append(out);
+  } else $("#nav").append(mk("#/login","로그인", h==="#/login"));
+}
+function go(h){ if(location.hash===h) render(); else location.hash=h; }
+function render(){
+  renderNav();
+  const h=location.hash||"#/";
+  for(const [re,fn] of routes){ const m=h.match(re); if(m){ fn(m); return; } }
+  go("#/");
+}
+window.addEventListener("hashchange", render);
+
+/* ══ 공용 UI 조각 ══ */
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+function setupBanner(){
+  if(api_base()) return null;
+  const b=el("div","setup-banner");
+  b.append(el("div",null,"아직 API 서버가 연결되지 않았습니다. 배포한 Worker 주소를 저장해 주세요 (README 참고)."));
+  const row=el("div","row");
+  const inp=el("input"); inp.placeholder="https://d2r-market.내계정.workers.dev";
+  const btn=el("button","btn btn-gold","저장"); btn.onclick=()=>{ const v=inp.value.trim().replace(/\/+$/,""); if(!/^https:\/\//.test(v)) return alert("https:// 로 시작하는 주소를 입력해 주세요"); localStorage.setItem("d2rmApi",v); render(); };
+  row.append(inp,btn); b.append(row); return b;
+}
+function chips(l){
+  const c=el("div"); c.style.display="contents";
+  [[L.platform[l.platform]],[L.mode[l.mode]],[L.ladder[l.ladder]],[L.version[l.version]]].forEach(([t])=>{ if(t) c.append(el("span","chip",t)); });
+  return c;
+}
+function itemColor(l){ const it=byEn.get(l.item_en); return TYPE_C[it? it.t : "b"] || "var(--c-b)"; }
+function footer(){
+  const f=el("div","footer");
+  const d=el("details"); d.append(el("summary",null,"연결 설정"));
+  const lab=el("label",null,"API 서버 주소 (Cloudflare Worker)"); const inp=el("input"); inp.value=api_base(); inp.placeholder="https://d2r-market.내계정.workers.dev";
+  const row=el("div","prow"); const save=el("button","btn","저장");
+  save.onclick=()=>{ const v=inp.value.trim().replace(/\/+$/,""); if(v && !/^https:\/\//.test(v)) return alert("https:// 로 시작해야 합니다"); if(v) localStorage.setItem("d2rmApi",v); else localStorage.removeItem("d2rmApi"); alert("저장했습니다"); render(); };
+  row.append(save); d.append(lab,inp,row); f.append(d);
+  f.append(el("p",null,"거래는 게임 내에서 당사자 간에 직접 이루어지며, 사이트는 게시판만 제공합니다. 현금 거래 금지 · 사기 주의. 팬 유틸리티이며 Blizzard와 무관합니다."));
+  return f;
+}
+
+/* ══ 피드 ══ */
+const F = { type:"", platform:"", mode:"", ladder:"", version:"", q:"", page:0 };
+function viewFeed(){
+  app.innerHTML="";
+  const sb=setupBanner(); if(sb) app.append(sb);
+  app.append(el("h1","page","매물 게시판"));
+  app.append(el("p","sub","팝니다·삽니다 매물을 검색하고, 거래완료 기록으로 시세를 확인하세요."));
+
+  const bar=el("div","filters");
+  const seg=el("div","seg");
+  [["","전체"],["sell","팝니다"],["buy","삽니다"]].forEach(([v,t])=>{
+    const b=el("button",null,t); if(F.type===v) b.className="on";
+    b.onclick=()=>{ F.type=v; F.page=0; viewFeed(); }; seg.append(b);
+  });
+  bar.append(seg);
+  const mkSel=(key, opts, first)=>{
+    const s=el("select"); s.append(new Option(first,""));
+    for(const [v,t] of opts) s.append(new Option(t,v));
+    s.value=F[key];
+    s.onchange=()=>{ F[key]=s.value; F.page=0; loadFeed(list,more,status,true); };
+    return s;
+  };
+  bar.append(
+    mkSel("platform", Object.entries(L.platform), "플랫폼"),
+    mkSel("mode", Object.entries(L.mode), "모드"),
+    mkSel("ladder", Object.entries(L.ladder), "래더"),
+    mkSel("version", Object.entries(L.version), "버전"),
+  );
+  const q=el("input","q"); q.placeholder="아이템 이름 검색 (한글/영문/약칭)"; q.value=F.q;
+  let deb; q.oninput=()=>{ clearTimeout(deb); deb=setTimeout(()=>{ F.q=q.value.trim(); F.page=0; loadFeed(list,more,status,true); },300); };
+  bar.append(q);
+  app.append(bar);
+
+  const status=el("p","status");
+  const list=el("div");
+  const more=el("div","more-wrap");
+  app.append(status,list,more,footer());
+  loadFeed(list,more,status,true);
+}
+async function loadFeed(list, moreWrap, status, reset){
+  if(reset){ list.textContent=""; F.page=0; }
+  moreWrap.textContent="";
+  status.innerHTML='<span class="spin"></span>매물을 불러오는 중…';
+  try{
+    const qs=new URLSearchParams();
+    for(const k of ["type","platform","mode","ladder","version"]) if(F[k]) qs.set(k,F[k]);
+    if(F.q) qs.set("q",F.q);
+    qs.set("page",F.page);
+    const data=await api("/api/listings?"+qs);
+    status.textContent = (F.page===0 && !data.listings.length) ? "조건에 맞는 매물이 없습니다. 첫 매물을 등록해 보세요!" : "";
+    for(const l of data.listings) list.append(listingRow(l));
+    if(data.more){
+      const b=el("button","btn","매물 더 보기");
+      b.onclick=()=>{ F.page++; loadFeed(list,moreWrap,status,false); };
+      moreWrap.append(b);
+    }
+  }catch(e){ status.textContent=""; const eb=el("div","err-box",e.message); list.append(eb); }
+}
+function listingRow(l){
+  const a=el("a","lrow"); a.href="#/l/"+l.id;
+  const top=el("div","top");
+  top.append(el("span","badge "+(l.status==="done"?"done":l.type), l.status==="done"?"거래완료":L.type[l.type]));
+  const nm=el("span","iname", l.item_ko); nm.style.color=itemColor(l);
+  top.append(nm, el("span","ien", l.item_en!==l.item_ko? l.item_en : ""));
+  a.append(top);
+  if(l.title) a.append(el("div","opts", l.title));
+  else if(l.options_text) a.append(el("div","opts", l.options_text.replace(/\s+/g," ")));
+  a.append(el("div","price", priceStr(l)));
+  const meta=el("div","meta");
+  meta.append(chips(l), el("span",null, l.username+" · "+fmtRel(l.updated_at)));
+  a.append(meta);
+  return a;
+}
+
+/* ══ 상세 ══ */
+async function viewDetail(id){
+  app.innerHTML="";
+  const status=el("p","status"); status.innerHTML='<span class="spin"></span>불러오는 중…';
+  app.append(status);
+  let data;
+  try{ data=await api("/api/listings/"+id); }
+  catch(e){ status.textContent=""; app.append(el("div","err-box",e.message), footer()); return; }
+  status.remove();
+  const l=data.listing; const u=me();
+
+  const plate=el("div","plate");
+  const nm=el("div","p-name", l.item_ko); nm.style.color=itemColor(l); plate.append(nm);
+  if(l.item_en && l.item_en!==l.item_ko) plate.append(el("div","p-en", l.item_en));
+  const pc=el("div","p-chips");
+  pc.append(el("span","badge "+(l.status==="done"?"done":l.type), l.status==="done"?"거래완료":L.type[l.type]));
+  pc.append(chips(l));
+  plate.append(pc);
+  if(l.title) plate.append(el("div","p-seller")).lastChild.append(el("b",null,l.title));
+  if(l.options_text) plate.append(el("div","p-opts", l.options_text));
+  plate.append(el("div","p-price","가격: "+priceStr(l)));
+  const seller=el("div","p-seller");
+  seller.append("판매자 "); seller.append(el("b",null,l.username));
+  if(l.battletag) seller.append(" · 배틀태그 ", el("b",null,l.battletag));
+  if(l.contact) seller.append(" · 연락 ", el("b",null,l.contact));
+  seller.append(" · "+fmtRel(l.updated_at));
+  plate.append(seller);
+
+  const cta=el("div","p-cta");
+  const tr=el("a","btn","트레더리 시세 ↗"); tr.target="_blank"; tr.rel="noopener";
+  tr.href="https://traderie.com/diablo2resurrected/products?search="+encodeURIComponent(l.item_en||l.item_ko);
+  const st=el("button","btn","우리 장터 완료 시세");
+  cta.append(tr,st);
+  if(u && u.username!==l.username){
+    const dm=el("button","btn btn-gold","쪽지 보내기");
+    dm.onclick=()=>{ msgRef={listing_id:l.id}; go("#/msg/"+encodeURIComponent(l.username)); };
+    const rep=el("button","btn","신고");
+    rep.onclick=async()=>{
+      const reason=prompt("이 매물을 신고하는 사유를 입력해 주세요 (현금거래 유도, 사기 의심 등)");
+      if(!reason) return;
+      try{ await api("/api/reports",{method:"POST",body:{target_type:"listing",target_id:l.id,reason}}); alert("신고가 접수되었습니다. 확인 후 조치하겠습니다."); }
+      catch(e){ alert(e.message); }
+    };
+    cta.append(dm,rep);
+  }
+  plate.append(cta);
+
+  if(u && u.username===l.username){
+    const bar=el("div","owner-bar");
+    const setStatus=async(s)=>{ try{ await api("/api/listings/"+l.id,{method:"PATCH",body:{status:s}}); viewDetail(l.id); }catch(e){ alert(e.message); } };
+    if(l.status!=="done"){ const b=el("button","btn btn-gold btn-sm","거래완료 처리"); b.onclick=()=>setStatus("done"); bar.append(b); }
+    if(l.status!=="active"){ const b=el("button","btn btn-sm","다시 판매중"); b.onclick=()=>setStatus("active"); bar.append(b); }
+    if(l.status!=="hidden"){ const b=el("button","btn btn-sm","숨김"); b.onclick=()=>setStatus("hidden"); bar.append(b); }
+    const ed=el("a","btn btn-sm","수정"); ed.href="#/edit/"+l.id; bar.append(ed);
+    const del=el("button","btn btn-danger btn-sm","삭제");
+    del.onclick=async()=>{ if(!confirm("정말 삭제할까요?")) return; try{ await api("/api/listings/"+l.id,{method:"DELETE"}); go("#/me"); }catch(e){ alert(e.message); } };
+    bar.append(del);
+    plate.append(bar);
+  }
+  app.append(plate);
+
+  const statsBox=el("div","stats-list");
+  app.append(statsBox);
+  st.onclick=async()=>{
+    statsBox.textContent=""; statsBox.append(el("p","status","완료 매물을 불러오는 중…"));
+    try{
+      const s=await api("/api/stats?item="+encodeURIComponent(l.item_en||l.item_ko));
+      statsBox.textContent="";
+      if(!s.completed.length){ statsBox.append(el("p","status","아직 이 아이템의 거래완료 기록이 없습니다.")); return; }
+      statsBox.append(el("h1","page","최근 거래완료 — "+l.item_ko));
+      for(const c of s.completed) statsBox.append(listingRow(c));
+    }catch(e){ statsBox.textContent=""; statsBox.append(el("div","err-box",e.message)); }
+  };
+
+  // 댓글
+  const cb=el("div","cmt-box");
+  cb.append(el("h1","page","댓글 · 흥정"));
+  const clist=el("div");
+  const renderCmt=(c)=>{
+    const d=el("div","cmt");
+    const who=el("div","who",c.username); who.append(el("span","when"," · "+fmtRel(c.created_at)));
+    if(u && u.username===c.username){
+      const x=el("button","btn btn-sm btn-danger","삭제"); x.style.float="right";
+      x.onclick=async()=>{ try{ await api("/api/comments/"+c.id,{method:"DELETE"}); d.remove(); }catch(e){ alert(e.message); } };
+      d.append(x);
+    } else if(u){
+      const x=el("button","btn btn-sm","신고"); x.style.float="right";
+      x.onclick=async()=>{
+        const reason=prompt("이 댓글을 신고하는 사유를 입력해 주세요");
+        if(!reason) return;
+        try{ await api("/api/reports",{method:"POST",body:{target_type:"comment",target_id:c.id,reason}}); alert("신고가 접수되었습니다."); }
+        catch(e){ alert(e.message); }
+      };
+      d.append(x);
+    }
+    d.append(who, el("p",null,c.body));
+    return d;
+  };
+  data.comments.forEach(c=> clist.append(renderCmt(c)));
+  cb.append(clist);
+  if(u){
+    const form=el("div","cmt-form");
+    const ta=el("textarea"); ta.placeholder="오퍼나 질문을 남겨보세요 (예: 자 3장에 가능할까요?)"; ta.maxLength=500;
+    const send=el("button","btn btn-gold","등록");
+    send.onclick=async()=>{
+      const body=ta.value.trim(); if(!body) return;
+      send.disabled=true;
+      try{ await api("/api/listings/"+l.id+"/comments",{method:"POST",body:{body}});
+        ta.value=""; const d2=await api("/api/listings/"+l.id);
+        clist.textContent=""; d2.comments.forEach(c=>clist.append(renderCmt(c)));
+      }catch(e){ alert(e.message); } finally{ send.disabled=false; }
+    };
+    form.append(ta,send); cb.append(form);
+  } else {
+    const p=el("p","status"); const a=el("a",null,"로그인"); a.href="#/login"; a.style.color="var(--gold)";
+    p.append(a," 후 댓글로 흥정할 수 있습니다."); cb.append(p);
+  }
+  app.append(cb, footer());
+}
+
+/* ══ 등록/수정 폼 ══ */
+async function viewForm(editId){
+  if(!me()){ go("#/login"); return; }
+  app.innerHTML="";
+  const sb=setupBanner(); if(sb) app.append(sb);
+  app.append(el("h1","page", editId? "매물 수정" : "매물 등록"));
+  const card=el("div","card");
+
+  let init=null;
+  if(editId){
+    try{ init=(await api("/api/listings/"+editId)).listing; }
+    catch(e){ app.append(el("div","err-box",e.message)); return; }
+    if(init.username!==me().username){ app.append(el("div","err-box","본인 매물만 수정할 수 있습니다")); return; }
+  }
+  const last = (()=>{ try{ return JSON.parse(localStorage.getItem("d2rmLast")||"{}"); }catch(_){ return {}; } })();
+  const v = init || { type:"sell", platform:last.platform||"pc", mode:last.mode||"sc", ladder:last.ladder||"non", version:last.version||"rotw", contact:last.contact||"", price_mode:"runes", price_runes:[] };
+
+  // 팝/삽
+  card.append(el("label",null,"구분"));
+  const seg=el("div","seg"); let type=v.type;
+  const segBtns=[["sell","팝니다"],["buy","삽니다"]].map(([val,t])=>{
+    const b=el("button",null,t); if(type===val) b.className="on";
+    b.onclick=()=>{ type=val; segBtns.forEach(x=>x.className=""); b.className="on"; };
+    seg.append(b); return b;
+  });
+  card.append(seg);
+
+  // 아이템 자동완성
+  card.append(el("label",null,"아이템 (한글/영문/약칭으로 검색)"));
+  const ac=el("div","ac");
+  const itemInput=el("input"); itemInput.placeholder="예: 티아라, 수수께끼, 샤코, ber…";
+  const acList=el("div","ac-list"); acList.hidden=true;
+  let picked = init? {k:init.item_ko, e:init.item_en} : null;
+  if(picked) itemInput.value = picked.k;
+  const pickedHint=el("p","hint", picked? `선택됨: ${picked.k} (${picked.e})` : "목록에서 선택하거나, 없으면 입력한 이름 그대로 등록됩니다");
+  itemInput.oninput=()=>{
+    picked=null; pickedHint.textContent="목록에서 선택하거나, 없으면 입력한 이름 그대로 등록됩니다";
+    const res=searchItems(itemInput.value,8);
+    acList.textContent=""; acList.hidden=!res.length;
+    for(const it of res){
+      const b=el("button");
+      const nm=el("span",null,it.k); nm.style.color=TYPE_C[it.t]; nm.style.fontWeight="600";
+      b.append(nm, el("span","chip",TYPE_KO[it.t]||""), el("span","en",it.e));
+      b.onclick=()=>{ picked={k:it.k,e:it.e}; itemInput.value=it.k; acList.hidden=true; pickedHint.textContent=`선택됨: ${it.k} (${it.e})`; };
+      acList.append(b);
+    }
+  };
+  itemInput.onblur=()=> setTimeout(()=>{ acList.hidden=true; },200);
+  ac.append(itemInput, acList);
+  card.append(ac, pickedHint);
+
+  card.append(el("label",null,"한 줄 제목 (선택)"));
+  const title=el("input"); title.maxLength=80; title.placeholder="예: 악마술사 2/30 생흡 티아라"; title.value=v.title||"";
+  card.append(title);
+
+  card.append(el("label",null,"아이템 옵션 (게임 표기 그대로)"));
+  const opts=el("textarea"); opts.style.minHeight="120px"; opts.maxLength=1200;
+  opts.placeholder="+2 악마술사 기술\n달리기/걷기 속도 +30%\n적중당 생명력 7% 훔침\n민첩 +12\n모든 저항 +10";
+  opts.value=v.options_text||"";
+  card.append(opts);
+
+  // 가격
+  card.append(el("label",null,"가격"));
+  const pseg=el("div","seg"); let pmode=v.price_mode||"runes";
+  const pBtns=[["runes","룬으로"],["offer","제안 받음"],["text","직접 입력"]].map(([val,t])=>{
+    const b=el("button",null,t); if(pmode===val) b.className="on";
+    b.onclick=()=>{ pmode=val; pBtns.forEach(x=>x.className=""); b.className="on"; syncPrice(); };
+    pseg.append(b); return b;
+  });
+  card.append(pseg);
+  const priceArea=el("div");
+  card.append(priceArea);
+  const priceText=el("input"); priceText.maxLength=120; priceText.placeholder="예: 자 3~4장 선, 교환 환영"; priceText.value=v.price_text||"";
+  const runeRows=el("div");
+  const addRuneRow=(rv)=>{
+    const row=el("div","prow");
+    const sel=el("select");
+    for(const r of RUNES){ const short=r.e.replace(/ Rune$/,""); sel.append(new Option(r.k.replace(/\s*룬$/,""), short)); }
+    sel.value=rv? rv.rune : "Jah";
+    const qty=el("input"); qty.type="number"; qty.min=1; qty.max=999; qty.value=rv? rv.qty : 1;
+    const del=el("button","btn btn-sm","−"); del.onclick=()=>row.remove();
+    row.append(sel,qty,del); runeRows.append(row);
+  };
+  const addBtn=el("button","btn btn-sm","+ 룬 추가"); addBtn.onclick=()=>addRuneRow();
+  function syncPrice(){
+    priceArea.textContent="";
+    if(pmode==="runes"){
+      priceArea.append(runeRows, addBtn, el("p","hint","예: 자 4개 + 베르 1개면 [자|4] [베르|1] 두 줄"));
+      if(!runeRows.children.length) addRuneRow(v.price_runes && v.price_runes[0]);
+      priceArea.append(el("label",null,"추가 메모 (선택)"), priceText);
+    } else if(pmode==="text"){
+      priceArea.append(el("label",null,"가격 설명"), priceText);
+    } else {
+      priceArea.append(el("p","hint","가격 없이 등록하고 댓글로 제안을 받습니다"));
+    }
+  }
+  if(v.price_runes && v.price_runes.length){ v.price_runes.forEach(r=>addRuneRow(r)); }
+  syncPrice();
+
+  // 서버/플랫폼
+  const g=el("div","grid2");
+  const mkSel=(labelText, key, opts)=>{
+    const wrap=el("div"); wrap.append(el("label",null,labelText));
+    const s=el("select");
+    for(const [val,t] of opts) s.append(new Option(t,val));
+    s.value=v[key]; wrap.append(s); g.append(wrap); return s;
+  };
+  const selPlat=mkSel("플랫폼","platform",Object.entries(L.platform));
+  const selMode=mkSel("모드","mode",Object.entries(L.mode));
+  const selLad=mkSel("래더","ladder",Object.entries(L.ladder));
+  const selVer=mkSel("버전","version",Object.entries(L.version));
+  card.append(g);
+
+  card.append(el("label",null,"연락 방법 (배틀태그 등)"));
+  const contact=el("input"); contact.maxLength=60; contact.placeholder="예: 홍길동#1234"; contact.value=v.contact||"";
+  card.append(contact);
+
+  const errBox=el("div","err-box"); errBox.hidden=true;
+  const submit=el("button","btn btn-gold", editId? "수정 저장":"매물 등록"); submit.style.marginTop="18px";
+  submit.onclick=async()=>{
+    errBox.hidden=true;
+    const body={
+      type,
+      item_ko: picked? picked.k : itemInput.value.trim(),
+      item_en: picked? picked.e : itemInput.value.trim(),
+      title:title.value, options_text:opts.value, contact:contact.value,
+      platform:selPlat.value, mode:selMode.value, ladder:selLad.value, version:selVer.value,
+      price_mode:pmode, price_text:priceText.value,
+      price_runes:[...runeRows.children].map(r=>({rune:r.children[0].value, qty:Number(r.children[1].value)||1})),
+    };
+    submit.disabled=true; submit.textContent="저장 중…";
+    try{
+      localStorage.setItem("d2rmLast",JSON.stringify({platform:body.platform,mode:body.mode,ladder:body.ladder,version:body.version,contact:body.contact}));
+      if(editId){ await api("/api/listings/"+editId,{method:"PATCH",body}); go("#/l/"+editId); }
+      else { const r=await api("/api/listings",{method:"POST",body}); go("#/l/"+r.id); }
+    }catch(e){ errBox.hidden=false; errBox.textContent=e.message; submit.disabled=false; submit.textContent= editId? "수정 저장":"매물 등록"; }
+  };
+  card.append(submit, errBox);
+  app.append(card, footer());
+}
+
+/* ══ 로그인/가입 ══ */
+function viewLogin(){
+  app.innerHTML="";
+  const sb=setupBanner(); if(sb) app.append(sb);
+  app.append(el("h1","page","로그인 · 회원가입"));
+  const card=el("div","card");
+  const seg=el("div","seg"); let modeIn=true;
+  const b1=el("button","on","로그인"), b2=el("button",null,"회원가입");
+  b1.onclick=()=>{modeIn=true; b1.className="on"; b2.className=""; bt.parentElement.hidden=true; sub.textContent="로그인";};
+  b2.onclick=()=>{modeIn=false; b2.className="on"; b1.className=""; bt.parentElement.hidden=false; sub.textContent="가입하기";};
+  seg.append(b1,b2); card.append(seg);
+  card.append(el("label",null,"아이디"));
+  const id=el("input"); id.autocomplete="username"; id.maxLength=16; card.append(id);
+  card.append(el("label",null,"비밀번호 (8자 이상)"));
+  const pw=el("input"); pw.type="password"; pw.autocomplete="current-password"; card.append(pw);
+  const btWrap=el("div"); btWrap.hidden=true;
+  btWrap.append(el("label",null,"배틀태그 (선택)"));
+  const bt=el("input"); bt.placeholder="홍길동#1234"; bt.maxLength=40; btWrap.append(bt);
+  card.append(btWrap);
+  const errBox=el("div","err-box"); errBox.hidden=true;
+  const sub=el("button","btn btn-gold","로그인"); sub.style.marginTop="18px";
+  const doAuth=async()=>{
+    errBox.hidden=true; sub.disabled=true;
+    try{
+      const path=modeIn? "/api/auth/login":"/api/auth/signup";
+      const r=await api(path,{method:"POST",body:{username:id.value.trim(),password:pw.value,battletag:bt.value.trim()}});
+      setAuth(r.token, r.user);
+      if(r.recovery_code) showRecoveryCode(r.recovery_code, r.notice||""); else go("#/");
+    }catch(e){ errBox.hidden=false; errBox.textContent=e.message; }
+    finally{ sub.disabled=false; }
+  };
+  sub.onclick=doAuth;
+  pw.addEventListener("keydown",(e)=>{ if(e.key==="Enter") doAuth(); });
+  card.append(sub, errBox);
+  const fg=el("p","hint");
+  const fga=el("a",null,"비밀번호를 잊으셨나요? 복구 코드로 재설정"); fga.href="#/recover"; fga.style.color="var(--gold-deep)";
+  fg.append(fga); card.append(fg);
+  card.append(el("p","hint","이메일은 수집하지 않습니다. 비밀번호를 잊으면 복구할 수 없으니 안전하게 보관해 주세요."));
+  app.append(card, footer());
+}
+
+/* ══ 내 매물 ══ */
+async function viewMe(){
+  const u=me(); if(!u){ go("#/login"); return; }
+  app.innerHTML="";
+  app.append(el("h1","page","내 매물"));
+  app.append(el("p","sub", u.username + (u.battletag? " · "+u.battletag : "")));
+  const acc=el("details","setup");
+  acc.append(el("summary",null,"계정 관리 — 비밀번호 변경 · 복구 코드 재발급"));
+  acc.append(el("label",null,"현재 비밀번호"));
+  const p0=el("input"); p0.type="password"; acc.append(p0);
+  acc.append(el("label",null,"새 비밀번호 (8자 이상)"));
+  const p1=el("input"); p1.type="password"; acc.append(p1);
+  const pwBtn=el("button","btn","비밀번호 변경"); pwBtn.style.marginTop="10px";
+  pwBtn.onclick=async()=>{
+    try{ await api("/api/auth/password",{method:"POST",body:{old_password:p0.value,new_password:p1.value}});
+      alert("비밀번호를 변경했습니다. 이 기기 외 다른 로그인은 모두 해제되었습니다."); p0.value=""; p1.value=""; }
+    catch(e){ alert(e.message); }
+  };
+  acc.append(pwBtn);
+  acc.append(el("label",null,"복구 코드 재발급 — 비밀번호 확인 (코드를 잃어버렸을 때)"));
+  const p2=el("input"); p2.type="password"; acc.append(p2);
+  const rcBtn=el("button","btn","새 복구 코드 발급"); rcBtn.style.marginTop="10px";
+  rcBtn.onclick=async()=>{
+    try{ const r=await api("/api/auth/recovery-code",{method:"POST",body:{password:p2.value}});
+      showRecoveryCode(r.recovery_code,"새 복구 코드입니다. 이전 코드는 무효화되었습니다."); }
+    catch(e){ alert(e.message); }
+  };
+  acc.append(rcBtn);
+  app.append(acc);
+  const status=el("p","status"); status.innerHTML='<span class="spin"></span>불러오는 중…';
+  const list=el("div"); app.append(status,list,footer());
+  try{
+    const data=await api("/api/listings?status=all&seller="+encodeURIComponent(u.username));
+    status.textContent = data.listings.length? "" : "등록한 매물이 없습니다.";
+    for(const l of data.listings) list.append(listingRow(l));
+  }catch(e){ status.textContent=""; list.append(el("div","err-box",e.message)); }
+}
+
+/* ══ 복구 · 쪽지 · 관리 ══ */
+let msgRef=null;
+function showRecoveryCode(code, extra){
+  app.innerHTML="";
+  app.append(el("h1","page","복구 코드를 보관하세요"));
+  const card=el("div","card");
+  card.append(el("p",null,(extra? extra+" " : "")+"이 코드는 지금 한 번만 표시됩니다. 비밀번호를 잊었을 때 유일한 복구 수단이니 안전한 곳에 적어 두세요."));
+  const box=el("div","code-box");
+  box.append(el("div","code",code));
+  const cp=el("button","btn btn-sm","코드 복사"); cp.style.marginTop="10px";
+  cp.onclick=async()=>{ try{ await navigator.clipboard.writeText(code); cp.textContent="복사됨 ✓"; }catch(_){ } };
+  box.append(cp); card.append(box);
+  const done=el("button","btn btn-gold","저장했습니다 — 계속"); done.style.marginTop="16px";
+  done.onclick=()=>go("#/");
+  card.append(done);
+  app.append(card, footer());
+}
+function viewRecover(){
+  app.innerHTML="";
+  const sb=setupBanner(); if(sb) app.append(sb);
+  app.append(el("h1","page","비밀번호 재설정 — 복구 코드"));
+  const card=el("div","card");
+  card.append(el("label",null,"아이디"));
+  const id=el("input"); id.maxLength=16; card.append(id);
+  card.append(el("label",null,"복구 코드 (가입/재발급 때 받은 코드)"));
+  const code=el("input"); code.placeholder="예: A3F9-1C77-…"; card.append(code);
+  card.append(el("label",null,"새 비밀번호 (8자 이상)"));
+  const pw=el("input"); pw.type="password"; card.append(pw);
+  const errBox=el("div","err-box"); errBox.hidden=true;
+  const sub=el("button","btn btn-gold","재설정"); sub.style.marginTop="18px";
+  sub.onclick=async()=>{
+    errBox.hidden=true; sub.disabled=true;
+    try{
+      const r=await api("/api/auth/recover",{method:"POST",body:{username:id.value.trim(),code:code.value,new_password:pw.value}});
+      setAuth(r.token, r.user);
+      showRecoveryCode(r.recovery_code, r.notice||"");
+    }catch(e){ errBox.hidden=false; errBox.textContent=e.message; }
+    finally{ sub.disabled=false; }
+  };
+  card.append(sub, errBox);
+  card.append(el("p","hint","복구 코드까지 잃어버린 경우 계정을 복구할 방법이 없습니다."));
+  app.append(card, footer());
+}
+async function refreshUnread(){
+  try{
+    const r=await api("/api/auth/me",{auth:"optional"});
+    window.__unread=r.unread||0;
+    localStorage.setItem("d2rmUser",JSON.stringify(r.user));
+    renderNav();
+  }catch(_){/**/}
+}
+async function viewMsgList(){
+  if(!me()){ go("#/login"); return; }
+  app.innerHTML="";
+  app.append(el("h1","page","쪽지함"));
+  const status=el("p","status"); status.innerHTML='<span class="spin"></span>불러오는 중…';
+  const list=el("div"); app.append(status,list,footer());
+  try{
+    const d=await api("/api/messages/threads");
+    status.textContent=d.threads.length? "" : "주고받은 쪽지가 없습니다. 매물 상세에서 '쪽지 보내기'로 시작해 보세요.";
+    for(const t of d.threads){
+      const a=el("a","mrow"); a.href="#/msg/"+encodeURIComponent(t.username);
+      a.append(el("span","who",t.username));
+      a.append(el("span","last",(t.mine?"나: ":"")+t.last_body));
+      if(t.unread) a.append(el("span","pill",t.unread>99?"99+":String(t.unread)));
+      a.append(el("span","when",fmtRel(t.last_at)));
+      list.append(a);
+    }
+  }catch(e){ status.textContent=""; list.append(el("div","err-box",e.message)); }
+}
+async function viewMsgThread(username){
+  if(!me()){ go("#/login"); return; }
+  app.innerHTML="";
+  const status=el("p","status"); status.innerHTML='<span class="spin"></span>불러오는 중…';
+  app.append(status);
+  let d;
+  try{ d=await api("/api/messages/with/"+encodeURIComponent(username)); }
+  catch(e){ status.textContent=""; app.append(el("div","err-box",e.message), footer()); return; }
+  status.remove();
+  refreshUnread();
+  app.append(el("h1","page","쪽지 — "+d.with.username+(d.with.battletag? " · "+d.with.battletag : "")));
+  const th=el("div","thread");
+  for(const m of d.messages){
+    const b=el("div","bub"+(m.mine?" mine":""));
+    if(m.listing_id){
+      const a=el("a","lref","매물 #"+m.listing_id+" 보기"); a.href="#/l/"+m.listing_id;
+      b.append(a, el("br"));
+    }
+    b.append(document.createTextNode(m.body));
+    b.append(el("span","bwhen",fmtRel(m.created_at)));
+    th.append(b);
+  }
+  app.append(th);
+  const form=el("div","cmt-form");
+  const ta=el("textarea"); ta.placeholder="쪽지 내용을 입력하세요"; ta.maxLength=1000;
+  const send=el("button","btn btn-gold","보내기");
+  send.onclick=async()=>{
+    const body=ta.value.trim(); if(!body) return;
+    send.disabled=true;
+    const ref=msgRef; msgRef=null;
+    try{ await api("/api/messages",{method:"POST",body:{to:username, body, listing_id:ref&&ref.listing_id}}); viewMsgThread(username); }
+    catch(e){ alert(e.message); send.disabled=false; }
+  };
+  form.append(ta,send);
+  app.append(form, footer());
+}
+async function viewAdmin(){
+  const u=me();
+  if(!u || !u.is_admin){ app.innerHTML=""; app.append(el("div","err-box","관리자만 접근할 수 있습니다"), footer()); return; }
+  app.innerHTML="";
+  app.append(el("h1","page","관리 — 미처리 신고"));
+  const status=el("p","status"); status.innerHTML='<span class="spin"></span>불러오는 중…';
+  const list=el("div"); app.append(status,list,footer());
+  let d;
+  try{ d=await api("/api/admin/reports"); }
+  catch(e){ status.textContent=""; list.append(el("div","err-box",e.message)); return; }
+  status.textContent=d.reports.length? "" : "미처리 신고가 없습니다.";
+  for(const rp of d.reports){
+    const c=el("div","card"); c.style.padding="14px"; c.style.marginTop="10px";
+    c.append(el("div",null,"#"+rp.id+" · "+rp.summary));
+    c.append(el("p","hint","사유: "+rp.reason+" — 신고자 "+rp.reporter+" · "+fmtRel(rp.created_at)));
+    const bar=el("div","owner-bar"); bar.style.justifyContent="flex-start";
+    const act=async(fn,okMsg)=>{ try{ await fn(); alert(okMsg); viewAdmin(); }catch(e){ alert(e.message); } };
+    if(rp.listing_id){
+      const a=el("a","btn btn-sm","매물 보기"); a.href="#/l/"+rp.listing_id; bar.append(a);
+      const h=el("button","btn btn-sm","매물 숨김");
+      h.onclick=()=>act(()=>api("/api/admin/listings/"+rp.listing_id,{method:"PATCH",body:{status:"hidden"}}),"숨김 처리했습니다");
+      bar.append(h);
+    }
+    if(rp.target_type==="comment"){
+      const dc=el("button","btn btn-sm btn-danger","댓글 삭제");
+      dc.onclick=()=>act(()=>api("/api/admin/comments/"+rp.target_id,{method:"DELETE"}),"댓글을 삭제했습니다");
+      bar.append(dc);
+    }
+    if(rp.owner && rp.owner!==u.username){
+      const bn=el("button","btn btn-sm btn-danger","계정 정지");
+      bn.onclick=()=>{ if(confirm(rp.owner+" 계정을 정지할까요? (세션 즉시 종료)")) act(()=>api("/api/admin/users/"+encodeURIComponent(rp.owner),{method:"PATCH",body:{banned:1}}),"정지했습니다"); };
+      const ub=el("button","btn btn-sm","정지 해제");
+      ub.onclick=()=>act(()=>api("/api/admin/users/"+encodeURIComponent(rp.owner),{method:"PATCH",body:{banned:0}}),"해제했습니다");
+      bar.append(bn,ub);
+    }
+    const cl=el("button","btn btn-gold btn-sm","처리 완료");
+    cl.onclick=()=>act(()=>api("/api/admin/reports/"+rp.id,{method:"PATCH",body:{status:"closed"}}),"처리 완료로 표시했습니다");
+    bar.append(cl);
+    c.append(bar); list.append(c);
+  }
+}
+
+/* ══ 시작 ══ */
+window.__mkt = { searchItems, priceStr, runeKo, norm };
+(async()=>{
+  if(token() && api_base()){
+    try{ const r=await api("/api/auth/me",{auth:"optional"}); window.__unread=r.unread||0; localStorage.setItem("d2rmUser",JSON.stringify(r.user)); }
+    catch(_){/* 만료 시 자동 로그아웃 처리됨 */}
+  }
+  render();
+})();
+})();
+</script>
+</body>
+</html>
