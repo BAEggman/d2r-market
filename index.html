@@ -73,6 +73,13 @@ h1.page{font-family:"Noto Serif KR",serif; font-size:19px; font-weight:700; colo
 .setup-banner input{margin-top:8px}
 .setup-banner .row{display:flex; gap:8px; margin-top:8px}
 
+/* -- 스크린샷 자동 인식 -- */
+.ai-drop{margin-top:6px; border:1px dashed var(--line-2); border-radius:10px; padding:16px; text-align:center; color:var(--dim); font-size:13px; cursor:pointer}
+.ai-drop.on{border-color:var(--gold-deep); color:var(--text)}
+.ai-preview{display:block; max-width:100%; max-height:200px; border-radius:8px; margin-top:8px}
+.ai-prog{height:4px; background:var(--line-2); border-radius:99px; overflow:hidden; margin-top:8px}
+.ai-prog i{display:block; height:100%; width:0; background:var(--gold); transition:width .2s}
+
 /* ── filter bar ── */
 .filters{display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 14px; align-items:center}
 .filters select{width:auto; padding:8px 10px; font-size:13px}
@@ -337,6 +344,7 @@ function renderNav(){
 function go(h){ if(location.hash===h) render(); else location.hash=h; }
 function render(){
   renderNav();
+  if(window.__viewCleanup){ try{ window.__viewCleanup(); }catch(_){} window.__viewCleanup=null; }
   const h=location.hash||"#/";
   for(const [re,fn] of routes){ const m=h.match(re); if(m){ fn(m); return; } }
   go("#/");
@@ -591,6 +599,98 @@ async function viewForm(editId){
     seg.append(b); return b;
   });
   card.append(seg);
+
+  // 스크린샷 자동 인식 (Gemini)
+  card.append(el("label",null,"스크린샷으로 자동 채우기 (선택)"));
+  const aiDrop=el("div","ai-drop","탭해서 스크린샷 선택 · 끌어다 놓기 · Ctrl+V 붙여넣기");
+  const aiFile=el("input"); aiFile.type="file"; aiFile.accept="image/*"; aiFile.hidden=true;
+  const aiPreview=el("img","ai-preview"); aiPreview.hidden=true;
+  const aiProg=el("div","ai-prog"); aiProg.hidden=true; const aiProgI=el("i"); aiProg.append(aiProgI);
+  const aiStatus=el("p","hint");
+  aiDrop.append(aiFile);
+  card.append(aiDrop, aiPreview, aiProg, aiStatus);
+  let aiBusy=false;
+  function aiShrink(file){
+    return new Promise((res,rej)=>{
+      const img=new Image(), url=URL.createObjectURL(file);
+      img.onload=()=>{
+        const scale=Math.min(1,1280/Math.max(img.naturalWidth,img.naturalHeight));
+        const c=document.createElement("canvas");
+        c.width=Math.max(1,Math.round(img.naturalWidth*scale));
+        c.height=Math.max(1,Math.round(img.naturalHeight*scale));
+        const x=c.getContext("2d"); x.imageSmoothingQuality="high"; x.drawImage(img,0,0,c.width,c.height);
+        URL.revokeObjectURL(url); res(c.toDataURL("image/jpeg",.9));
+      };
+      img.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error("이미지를 읽지 못했습니다")); };
+      img.src=url;
+    });
+  }
+  async function aiRunIdentify(file){
+    if(aiBusy || !file || !file.type.startsWith("image/")) return;
+    aiBusy=true;
+    if(aiPreview.src && aiPreview.src.startsWith("blob:")) URL.revokeObjectURL(aiPreview.src);
+    aiPreview.src=URL.createObjectURL(file); aiPreview.hidden=false;
+    aiProg.hidden=false; aiProgI.style.width="15%";
+    aiStatus.textContent="이미지를 준비하는 중…";
+    try{
+      const base=api_base();
+      if(!base){ aiStatus.textContent="먼저 하단 설정에서 API 서버 주소를 저장해 주세요"; return; }
+      const dataUrl=await aiShrink(file);
+      const b64=dataUrl.slice(dataUrl.indexOf(",")+1);
+      aiProgI.style.width="55%"; aiStatus.textContent="아이템을 인식하는 중…";
+      const r=await fetch(base+"/ai/identify",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({mime:"image/jpeg",data:b64})});
+      const out=await r.json().catch(()=>null);
+      aiProgI.style.width="100%";
+      if(!r.ok || !out || !out.ok){
+        aiStatus.textContent=(out&&out.message) || "인식에 실패했어요. 잠시 후 다시 시도하거나 직접 입력해 주세요";
+        return;
+      }
+      let hit=null, hitScore=0;
+      const tryMatch=(q)=>{
+        if(!q) return;
+        const res=searchItems(q,1);
+        if(res.length){ const it=res[0]; const nq=norm(q);
+          const sc=(nq===it._n||nq===it._ne)?1.05:.8;
+          if(sc>hitScore){ hit=it; hitScore=sc; }
+        }
+      };
+      tryMatch(out.nameRaw);
+      if(hitScore<0.9){ for(const n of (out.names||[])){ tryMatch(n.ko); tryMatch(n.en); } }
+      if(hitScore<0.9){ tryMatch(out.baseRaw); }
+      if(hit){
+        picked={k:hit.k, e:hit.e}; itemInput.value=hit.k; acList.hidden=true;
+        pickedHint.textContent=`선택됨: ${hit.k} (${hit.e}) — 사진 인식`;
+      } else if(out.nameRaw){
+        picked=null; itemInput.value=out.nameRaw;
+        pickedHint.textContent="사전에 없는 이름이에요 — 입력한 이름 그대로 등록됩니다. 필요하면 수정해 주세요";
+      }
+      if(out.optionLines && out.optionLines.length && !opts.value.trim()){
+        opts.value=out.optionLines.join("\n");
+      }
+      aiStatus.textContent = hit? "인식 완료 — 아래 내용을 확인하고 필요하면 수정해 주세요" : "이름을 정확히 알아보지 못했어요 — 아이템 칸을 확인해 주세요";
+    }catch(err){
+      aiStatus.textContent="인식에 실패했어요. 네트워크를 확인하거나 직접 입력해 주세요";
+    }finally{
+      aiBusy=false;
+      setTimeout(()=>{ aiProg.hidden=true; },500);
+    }
+  }
+  aiFile.addEventListener("change",e=>aiRunIdentify(e.target.files[0]));
+  aiDrop.addEventListener("click",()=>aiFile.click());
+  ["dragover","dragenter"].forEach(ev=>aiDrop.addEventListener(ev,e=>{e.preventDefault();aiDrop.classList.add("on");}));
+  ["dragleave","drop"].forEach(ev=>aiDrop.addEventListener(ev,e=>{e.preventDefault();aiDrop.classList.remove("on");}));
+  aiDrop.addEventListener("drop",e=>aiRunIdentify(e.dataTransfer.files[0]));
+  const aiPasteHandler=(e)=>{
+    if(!document.body.contains(card)){ window.removeEventListener("paste",aiPasteHandler); return; }
+    const items=[...((e.clipboardData&&e.clipboardData.items)||[])];
+    const hitI=items.find(i=>i.type && i.type.startsWith("image/"));
+    if(!hitI) return;
+    e.preventDefault();
+    aiRunIdentify(hitI.getAsFile());
+  };
+  window.addEventListener("paste",aiPasteHandler);
+  window.__viewCleanup=()=>window.removeEventListener("paste",aiPasteHandler);
+
 
   // 아이템 자동완성
   card.append(el("label",null,"아이템 (한글/영문/약칭으로 검색)"));
