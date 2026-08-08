@@ -230,7 +230,7 @@ h1.page{font-family:"Noto Serif KR",serif; font-size:19px; font-weight:700; colo
 <script>
 (()=>{ "use strict";
 /* ══ 설정 ══ */
-const API_BASE_DEFAULT = ""; // 배포 시 Worker 주소로 교체 가능 (예: "https://d2r-market.계정.workers.dev")
+const API_BASE_DEFAULT = "https://d2r-market.entertain456842.workers.dev";
 const $ = (s,el)=> (el||document).querySelector(s);
 const app = $("#app");
 const api_base = ()=> (localStorage.getItem("d2rmApi") || API_BASE_DEFAULT).replace(/\/+$/,"");
