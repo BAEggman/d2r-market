@@ -301,6 +301,7 @@ async function identifyItem(request, env) {
     return json({
       error: "rate_limited",
       message: "Gemini 무료 할당량을 다 썼습니다. 잠시 후(또는 내일) 다시 시도해 주세요.",
+      detail: lastDetail,
     }, 429);
   }
   if (lastStatus === 401 || lastStatus === 403) {
