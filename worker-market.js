@@ -293,7 +293,7 @@ async function identifyItem(request, env) {
     }
 
     lastStatus = r.status;
-    lastDetail = (await r.text().catch(() => "")).slice(0, 300);
+    lastDetail = (await r.text().catch(() => "")).slice(0, 900);
     if (r.status !== 404 && r.status !== 400 && r.status !== 429) break;
   }
 
